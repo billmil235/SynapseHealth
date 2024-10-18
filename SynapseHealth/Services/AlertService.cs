@@ -2,29 +2,27 @@
 using Serilog;
 using Newtonsoft.Json.Linq;
 using RichardSzalay.MockHttp;
+using Microsoft.Extensions.Configuration;
 
 namespace SynapseHealth.Services
 {
 	public class AlertService : IAlertService
 	{
-        private const string updateApiUrl = "https://update-api.com/update";
-        private const string alertApiUrl = "https://alert-api.com/alerts";
+        private string alertApiUrl { get; set; }
 
-        private HttpClient _updateHttpClient { get; set; }
         private HttpClient _alertHttpClient { get; set; }
-
-        private readonly MockHttpMessageHandler _updateMockHttp = new();
         private readonly MockHttpMessageHandler _alertMockHttp = new();
 
-        public AlertService()
+        public AlertService(IConfiguration configuration)
 		{
-            _updateMockHttp.When(updateApiUrl)
-                .Respond(req => new HttpResponseMessage(System.Net.HttpStatusCode.OK));
+            // Retrieve URLs from AppSettings.  Hard coding them in the application is bad practice.
+            var config = configuration.GetSection("Urls").Get<Urls>();
+            alertApiUrl = config!.AlertApiUrl;
 
+            // Set up the mock for the HttpClient to return the dummy data created previously.
             _alertMockHttp.When(alertApiUrl)
                 .Respond(req => new HttpResponseMessage(System.Net.HttpStatusCode.OK));
 
-            _updateHttpClient = _updateMockHttp.ToHttpClient();
             _alertHttpClient = _alertMockHttp.ToHttpClient();
 		}
 
@@ -32,6 +30,7 @@ namespace SynapseHealth.Services
         /// Delivery alert
         /// </summary>
         /// <param name="orderId">The order id for the alert</param>
+        /// <param name="item">The item to alert about.</param>
         public async Task SendAlertMessage(JToken item, string orderId)
         { 
             var alertData = new
@@ -39,6 +38,7 @@ namespace SynapseHealth.Services
                 Message = $"Alert for delivered item: Order {orderId}, Item: {item["Description"]}, " +
                             $"Delivery Notifications: {item["deliveryNotification"]}"
             };
+
             var content = new StringContent(JObject.FromObject(alertData).ToString(), System.Text.Encoding.UTF8, "application/json");
             var response = await _alertHttpClient.PostAsync(alertApiUrl, content);
 
@@ -49,21 +49,6 @@ namespace SynapseHealth.Services
             else
             {
                 Log.Logger.Error($"Failed to send alert for delivered item: {item["Description"]}");
-            }
-        }
-
-        public async Task SendAlertAndUpdateOrder(JObject order)
-        {
-            var content = new StringContent(order.ToString(), System.Text.Encoding.UTF8, "application/json");
-            var response = await _updateHttpClient.PostAsync(updateApiUrl, content);
-
-            if (response.IsSuccessStatusCode)
-            {
-                Log.Logger.Information($"Updated order sent for processing: OrderId {order["OrderId"]}");
-            }
-            else
-            {
-                Log.Logger.Error($"Failed to send updated order for processing: OrderId {order["OrderId"]}");
             }
         }
     }

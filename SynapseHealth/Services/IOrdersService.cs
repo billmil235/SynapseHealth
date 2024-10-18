@@ -8,6 +8,7 @@ namespace SynapseHealth.Services
 	{
         Task<JObject[]> FetchMedicalEquipmentOrders();
         JObject ProcessOrder(JObject order);
+        Task UpdateOrder(JObject order);
     }
 }
 

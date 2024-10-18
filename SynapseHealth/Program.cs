@@ -14,8 +14,11 @@ namespace Synapse.OrdersExample
     class Program
     {
 
+        // This method was made ASYNC so I do not have to use GetAwaiter/GetResult
+        // Its possible that it may cause a deadlock.
         static async Task<int> Main(string[] args)
         {
+            // Set up dependency injection
             IHost _host = Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
@@ -24,28 +27,30 @@ namespace Synapse.OrdersExample
                 })
                 .Build();
 
+            // Set up to read serilog config from AppSettings file.
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json")
                 .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", true)
                 .Build();
 
+            //  Set up Serilog
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                          .CreateLogger();
 
             Log.Logger.Information("Start of Orders Processing Application");
 
+            // Retrieve the service from the DI container
             IServiceProvider provider = _host.Services.CreateScope().ServiceProvider;
             var _ordersService = provider.GetService<IOrdersService>();
-            var _alertService = provider.GetService<IAlertService>();
 
             var medicalEquipmentOrders = await _ordersService!.FetchMedicalEquipmentOrders();
 
             foreach (var order in medicalEquipmentOrders)
             {
                 var updatedOrder = _ordersService.ProcessOrder(order);
-                await _alertService!.SendAlertAndUpdateOrder(updatedOrder);
+                await _ordersService!.UpdateOrder(updatedOrder);
             }
 
             Log.Logger.Information("Completed processing orders.");
