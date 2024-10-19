@@ -55,13 +55,15 @@ namespace SynapseHealth.Services
 
             if (response.IsSuccessStatusCode)
             {
+                // In an actual production scenario I woul deserialize this to actual
+                // C# objects rather than pass these generic JSON objects around.
                 var ordersData = await response.Content.ReadAsStringAsync();
                 return JArray.Parse(ordersData).ToObject<JObject[]>();
             }
             else
             {
                 Log.Logger.Error("Failed to fetch orders from API.");
-                return new JObject[0];
+                return Array.Empty<JObject>();
             }
         }
 
@@ -74,7 +76,7 @@ namespace SynapseHealth.Services
         {
             var items = order["Items"]!.ToObject<JArray>();
 
-            // Only orders with items are valid.  Infor the user if order is invalid.
+            // Only orders with items are valid.  Inform the user if order is invalid.
             if (items == null)
             {
                 Log.Logger.Error($"Order contains no items. Order Id: {order["OrderId"]}");
@@ -123,7 +125,7 @@ namespace SynapseHealth.Services
         /// Increments the number of times a delivery notification was sent.
         /// </summary>
         /// <param name="item">The item the delivery notification was sent for.</param>
-        private void IncrementDeliveryNotification(JToken item)
+        public void IncrementDeliveryNotification(JToken item)
         {
             item["deliveryNotification"] = item["deliveryNotification"]!.Value<int>() + 1;
         }
@@ -133,7 +135,7 @@ namespace SynapseHealth.Services
         /// </summary>
         /// <param name="item">The item to check the delivery status of.</param>
         /// <returns>True or false depending on whether the item has been delivered or not.</returns>
-        private bool IsItemDelivered(JToken item)
+        public bool IsItemDelivered(JToken item)
         {
             return item["Status"].ToString().Equals("Delivered", StringComparison.OrdinalIgnoreCase);
         }

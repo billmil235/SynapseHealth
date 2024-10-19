@@ -9,6 +9,8 @@ namespace SynapseHealth.Services
         Task<JObject[]> FetchMedicalEquipmentOrders();
         JObject ProcessOrder(JObject order);
         Task UpdateOrder(JObject order);
+        bool IsItemDelivered(JToken item);
+        void IncrementDeliveryNotification(JToken item);
     }
 }
 
