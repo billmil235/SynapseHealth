@@ -1,22 +1,20 @@
-﻿using System;
-using Serilog;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using RichardSzalay.MockHttp;
-using Microsoft.Extensions.Configuration;
+using Serilog;
 
 namespace SynapseHealth.Services
 {
-	public class AlertService : IAlertService
+    public class AlertService : IAlertService
 	{
         private string alertApiUrl { get; set; }
 
         private HttpClient _alertHttpClient { get; set; }
         private readonly MockHttpMessageHandler _alertMockHttp = new();
 
-        public AlertService(IConfiguration configuration)
+        public AlertService(IConfigurationProvider configurationProvider)
 		{
             // Retrieve URLs from AppSettings.  Hard coding them in the application is bad practice.
-            var config = configuration.GetSection("Urls").Get<Urls>();
+            var config = configurationProvider.GetConfiguration();
             alertApiUrl = config!.AlertApiUrl;
 
             // Set up the mock for the HttpClient to return the dummy data created previously.

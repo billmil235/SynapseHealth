@@ -14,6 +14,15 @@ public class OrdersServiceTests
     public OrdersServiceTests()
     {
         _mocker = new AutoMocker();
+        Mock<Services.IConfigurationProvider> configurationProviderMock = _mocker.GetMock<Services.IConfigurationProvider>();
+
+        configurationProviderMock.Setup(x => x.GetConfiguration()).Returns(new Urls()
+        {
+            AlertApiUrl = "/alerts",
+            OrdersApiUrl = "/Orders",
+            UpdateApiUrl = "/Update"
+        });
+
         _ordersService = _mocker.CreateInstance<OrdersService>();
     }
 
@@ -27,11 +36,13 @@ public class OrdersServiceTests
     }
 
     [Theory]
-    [InlineData(new Object[] { "Delivered" })]
-    public void Test_IsItemDelivered(string status)
+    [InlineData(new Object[] { "Delivered", true })]
+    [InlineData(new Object[] { "Not Delivered", false })]
+    public void Test_IsItemDelivered(string status, bool expected)
     {
         JToken item = JToken.Parse($"{{'Status': {status}}}");
 
         var delivered = _ordersService.IsItemDelivered(item);
+        Assert.Equal(delivered, expected);
     }
 }

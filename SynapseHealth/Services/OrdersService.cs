@@ -1,14 +1,12 @@
-﻿using System;
-using Serilog;
-using Microsoft.Extensions.Configuration;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RichardSzalay.MockHttp;
+using Serilog;
 using SynapseHealth.Models;
 
 namespace SynapseHealth.Services
 {
-	public class OrdersService : IOrdersService
+    public class OrdersService : IOrdersService
     {
         private string updateApiUrl { get; set; }
         private string ordersApiUrl { get; set; }
@@ -21,12 +19,12 @@ namespace SynapseHealth.Services
         private readonly MockHttpMessageHandler _ordersMockHttp = new();
         private readonly MockHttpMessageHandler _updateMockHttp = new();
 
-        public OrdersService(IAlertService alertService, IConfiguration configuration)
+        public OrdersService(IAlertService alertService, IConfigurationProvider configurationProvider)
 		{
             _alertService = alertService;
 
             // Retrieve URLs from AppSettings.  Hard coding them in the application is bad practice.
-            var config = configuration.GetSection("Urls").Get<Urls>();
+            var config = configurationProvider.GetConfiguration();
             ordersApiUrl = config!.OrdersApiUrl;
             updateApiUrl = config!.UpdateApiUrl;
 
