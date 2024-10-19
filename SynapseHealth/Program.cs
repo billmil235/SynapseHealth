@@ -24,7 +24,7 @@ namespace Synapse.OrdersExample
                 {
                     services.AddTransient<IOrdersService, OrdersService>();
                     services.AddTransient<IAlertService, AlertService>();
-                    services.AddSingleton<SynapseHealth.Services.ConfigurationProvider>();
+                    services.AddSingleton<SynapseHealth.Services.IConfigurationProvider, SynapseHealth.Services.ConfigurationProvider>();
                 })
                 .Build();
 
